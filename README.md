@@ -16,6 +16,15 @@ The goal of this project is to analyze and understand what causes Pima Indian wo
 ### Statistical Methods:
 Logistic Regression, Decision Trees, RandomForest
 
+### Sample Output:
+
+#### Decision Tree
+
+![Decision Tree](https://github.com/cheanlin07/Pima-Indian-Women-Diabetes-Analysis/blob/master/Sample_images/decision_tree.png?raw=true)
+
+#### Dotchart of variable importance as measured by a Random Forest model
+![dotplot](https://github.com/cheanlin07/Pima-Indian-Women-Diabetes-Analysis/blob/master/Sample_images/dotplot_importance.png?raw=true)
+
 
 
 
