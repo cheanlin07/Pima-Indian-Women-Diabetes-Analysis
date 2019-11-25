@@ -1,0 +1,133 @@
+---
+title: "Pima Indian Women Diabetes - Analysis & Predictions"
+author: "Che-An Lin, Alexander Yang"
+date: "April 18, 2019"
+output: 
+  html_document: 
+    toc: true
+    theme: united
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(plotly)
+library(rpart)
+library(rpart.plot)
+library(tree)
+library(corrplot)
+library(caret)
+library(Hmisc)
+library(randomForest)
+```
+
+## Import & Explore the Dataset
+```{r}
+diabetes.df <- read.csv("diabetes.csv", header = T)
+diabetes.df <- na.omit(diabetes.df)
+diabetes.df$Outcome <- factor(diabetes.df$Outcome)
+summary(diabetes.df)
+```
+
+## Split the Data Into Training and Test Dataset
+```{r}
+data.size<-nrow(diabetes.df)
+train.size<-0.60
+
+set.seed(12345)
+
+train.row.nums<-sample(1:data.size, data.size*train.size, replace=FALSE)
+train.data<-subset(diabetes.df[train.row.nums,])
+
+test.row.nums<-setdiff(1:data.size,train.row.nums)
+test.data<-subset(diabetes.df[test.row.nums,])
+
+true.labels<-test.data[,9]
+```
+
+## Create the Logistic Regression Model
+```{r}
+mod1 <-glm(Outcome~.,data=train.data, family=binomial(logit))
+summary(mod1)
+```
+
+```{r}
+mod2 <- mod1
+mod2 <- step(mod2)
+summary(mod2)
+```
+
+### Make Predictions From the Logistic Model & Generate Confusion Matrix 
+```{r}
+fit.pred1 <- predict(mod2,test.data, type = "response")
+class.threshold<-0.5
+pred.labels<-rep(0,length(true.labels))
+pred.labels[fit.pred1>class.threshold]=1
+pred.labels <- factor(pred.labels)
+confusionMatrix(pred.labels,true.labels)
+```
+
+## Create a Decision Tree 
+```{r}
+diabetes.tree <- rpart(Outcome~., data = diabetes.df, method = "class")
+rpart.plot(diabetes.tree,box.palette="RdBu", shadow.col="gray", nn = TRUE)
+```
+```{r}
+fit.pred2 <- predict(diabetes.tree, test.data, type = "class")
+confusionMatrix(fit.pred2,true.labels)
+```
+
+### Choose the cp For the Tree & Prune the Tree
+```{r}
+
+par(mfrow=c(1,2))
+diabetes.tree2 <- tree(Outcome~., data = diabetes.df)
+cv.diabetes <- cv.tree(diabetes.tree2)
+plot(cv.diabetes$size, cv.diabetes$dev, type="b")
+plot(cv.diabetes$k, cv.diabetes$dev, type="b")
+```
+```{r}
+summary(diabetes.tree)
+diabetes.prune <- prune(diabetes.tree, cp = 0.043)
+plotcp(diabetes.tree)
+```
+
+### Plot the Pruned Tree
+```{r}
+rpart.plot(diabetes.prune,box.palette="RdBu", shadow.col="gray", nn = TRUE)
+fit.pred3 <- predict(diabetes.prune, test.data, type = "class")
+confusionMatrix(fit.pred3,true.labels)
+```
+
+### Generate the Correlation Matrix Using corrplot & plotly
+```{r}
+corr <- rcorr(as.matrix(diabetes.df))
+corr
+t <- list(
+  family = "Arial",
+  size = 13,
+  color = 'white')
+corrplot(corr$r, type = "upper", order = "hclust",tl.col = "black", tl.srt = 45)
+p <- plot_ly(z = cor(data.matrix(diabetes.df)), x = colnames(diabetes.df), y = colnames(diabetes.df), type = "heatmap", colorscale = "Electric", paper_bgcolor = "black") %>% 
+  layout(paper_bgcolor = "black", title = "Correlation Matrix", font = t)
+p
+```
+
+### Generate Confusion Matrix for the Decision Tree
+```{r}
+fit.pred3 <- predict(diabetes.prune, test.data, type = "class")
+confusionMatrix(fit.pred3,true.labels)
+```
+
+## Create RandomForest Model
+```{r}
+seed.val<-12345
+rf.diabetes <- randomForest(Outcome~., data = train.data, mtry = 8, importance = T)
+rf.diabetes.pred <- predict(rf.diabetes, newdata = test.data)
+```
+
+### Create the Importance Plot & Confusion Matrix
+```{r}
+importance(rf.diabetes)
+varImpPlot(rf.diabetes)
+confusionMatrix(rf.diabetes.pred, true.labels)
+```
