@@ -5,6 +5,7 @@ Authors: Alexander Yang, Che-An Lin
 
 ### Resource
 For this project, we used the Pima Indians Diabetes Database provided by UCI Machine Learning on Kaggle.
+
 Dataset: https://www.kaggle.com/uciml/pima-indians-diabetes-database
 
 ### Research Question:
