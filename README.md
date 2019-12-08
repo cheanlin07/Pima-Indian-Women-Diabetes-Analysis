@@ -1,6 +1,6 @@
 # Pima-Indian-Women-Diabetes-Analysis
 Final project of Info248 - Intro to Data Science
-
+Instructor: Gordon Anderson
 Authors: Alexander Yang, Che-An Lin
 
 ### Resource
